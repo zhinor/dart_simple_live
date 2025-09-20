@@ -34,6 +34,14 @@ jobs:
           flutter-version: '3.22.x'
           cache: true
 
+      # Create dummy key.properties file to avoid build errors
+      - name: Create dummy key.properties
+        run: |
+          echo "storePassword=dummy" > simple_live_app/android/key.properties
+          echo "keyPassword=dummy" >> simple_live_app/android/key.properties
+          echo "keyAlias=dummy" >> simple_live_app/android/key.properties
+          echo "storeFile=/dev/null" >> simple_live_app/android/key.properties
+
       # Restore Flutter packages
       - name: Restore packages
         run: |
