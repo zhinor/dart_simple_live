@@ -27,9 +27,8 @@ jobs:
           flutter-version: '3.22.x'
           cache: true
 
-      # Setup keystore for signing (if secrets are available)
+      # Setup keystore for signing
       - name: Setup keystore
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
         uses: timheuer/base64-to-file@v1.2
         id: android_keystore
         with:
@@ -40,21 +39,11 @@ jobs:
       - name: Create key.properties
         run: |
           cd simple_live_app/android
-          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
-            echo "storeFile=${{ steps.android_keystore.outputs.filePath }}" > key.properties
-            echo "storePassword=${{ secrets.STORE_PASSWORD }}" >> key.properties
-            echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> key.properties
-            echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> key.properties
-            echo "Using provided keystore for signing"
-          else
-            # Fallback to generating a deterministic keystore
-            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -storetype JKS
-            echo "storePassword=android" > key.properties
-            echo "keyPassword=android" >> key.properties
-            echo "keyAlias=androiddebugkey" >> key.properties
-            echo "storeFile=debug.keystore" >> key.properties
-            echo "Using generated keystore for signing"
-          fi
+          echo "storeFile=${{ steps.android_keystore.outputs.filePath }}" > key.properties
+          echo "storePassword=${{ secrets.STORE_PASSWORD }}" >> key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> key.properties
+          echo "Using provided keystore for signing"
 
       # Restore Flutter packages
       - name: Restore packages
