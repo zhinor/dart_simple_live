@@ -11,6 +11,8 @@ jobs:
       # Checkout the code
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: true
 
       # Setup Java environment
       - name: Setup Java
