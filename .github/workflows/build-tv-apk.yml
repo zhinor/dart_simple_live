@@ -3,17 +3,9 @@ name: Build TV APK
 on:
   # 手动触发工作流
   workflow_dispatch:
-    inputs:
-      run_build:
-        description: '是否运行构建'
-        type: boolean
-        default: false
-        required: true
 
 jobs:
   build-tv-apk:
-    # 只有当手动触发且选择运行构建时才执行
-    if: github.event.inputs.run_build == 'true'
     runs-on: ubuntu-latest
     steps:
       # Checkout the code
