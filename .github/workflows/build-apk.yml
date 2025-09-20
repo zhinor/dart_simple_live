@@ -34,20 +34,32 @@ jobs:
           flutter-version: '3.22.x'
           cache: true
 
-      # Create a deterministic self-signed keystore for development
-      - name: Create deterministic keystore
-        run: |
-          cd simple_live_app/android
-          # Generate keystore with fixed parameters to ensure consistency
-          keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -storetype JKS
+      # Setup keystore for signing (if secrets are available)
+      - name: Setup keystore
+        if: env.KEYSTORE_BASE64 != ''
+        uses: timheuer/base64-to-file@v1.2
+        id: android_keystore
+        with:
+          fileName: release-keystore.jks
+          encodedString: ${{ secrets.KEYSTORE_BASE64 }}
 
       # Create key.properties file
       - name: Create key.properties
         run: |
-          echo "storePassword=android" > simple_live_app/android/key.properties
-          echo "keyPassword=android" >> simple_live_app/android/key.properties
-          echo "keyAlias=androiddebugkey" >> simple_live_app/android/key.properties
-          echo "storeFile=debug.keystore" >> simple_live_app/android/key.properties
+          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "storeFile=${{ steps.android_keystore.outputs.filePath }}" > simple_live_app/android/key.properties
+            echo "storePassword=${{ secrets.STORE_PASSWORD }}" >> simple_live_app/android/key.properties
+            echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> simple_live_app/android/key.properties
+            echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> simple_live_app/android/key.properties
+          else
+            # Fallback to generating a deterministic keystore
+            cd simple_live_app/android
+            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -storetype JKS
+            echo "storePassword=android" > simple_live_app/android/key.properties
+            echo "keyPassword=android" >> simple_live_app/android/key.properties
+            echo "keyAlias=androiddebugkey" >> simple_live_app/android/key.properties
+            echo "storeFile=debug.keystore" >> simple_live_app/android/key.properties
+          fi
 
       # Restore Flutter packages
       - name: Restore packages
