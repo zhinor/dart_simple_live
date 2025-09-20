@@ -34,17 +34,31 @@ jobs:
           flutter-version: '3.22.x'
           cache: true
 
+      # Create a self-signed keystore for development
+      - name: Create self-signed keystore
+        run: |
+          cd simple_live_tv_app/android
+          keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -storetype JKS
+
+      # Create key.properties file
+      - name: Create key.properties
+        run: |
+          echo "storePassword=android" > simple_live_tv_app/android/key.properties
+          echo "keyPassword=android" >> simple_live_tv_app/android/key.properties
+          echo "keyAlias=androiddebugkey" >> simple_live_tv_app/android/key.properties
+          echo "storeFile=debug.keystore" >> simple_live_tv_app/android/key.properties
+
       # Restore Flutter packages for TV app
       - name: Restore TV app packages
         run: |
           cd simple_live_tv_app
           flutter pub get
 
-      # Build TV APK without signing for development
-      - name: Build TV APK
+      # Build signed TV APK
+      - name: Build signed TV APK
         run: |
           cd simple_live_tv_app
-          flutter build apk --release --no-shrink
+          flutter build apk --release
 
       # Upload TV APK artifacts
       - name: Upload TV APK artifacts
