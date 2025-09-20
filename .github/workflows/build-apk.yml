@@ -51,11 +51,23 @@ jobs:
           cd simple_live_app
           flutter pub get
 
+      # Verify dependencies
+      - name: Verify dependencies
+        run: |
+          cd simple_live_app
+          flutter pub deps
+
       # Build signed APK
       - name: Build signed APK
         run: |
           cd simple_live_app
           flutter build apk --release --split-per-abi
+
+      # Verify build outputs
+      - name: Verify build outputs
+        run: |
+          cd simple_live_app
+          ls -la build/app/outputs/flutter-apk/
 
       # Upload APK artifacts
       - name: Upload APK artifacts

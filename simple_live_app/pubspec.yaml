@@ -73,7 +73,7 @@ dependencies:
   media_kit_libs_video: 1.0.5
 
   # 投屏功能
-  dart_chromecast: ^0.3.3
+  dart_chromecast: 0.2.6
 
   flutter:
     sdk: flutter
@@ -83,6 +83,7 @@ dependencies:
 dependency_overrides:
   screen_brightness: ^2.1.2
   screen_brightness_android: 2.1.2
+  cli_util: ^0.3.5
 
 dev_dependencies:
   flutter_lints: ^2.0.0
