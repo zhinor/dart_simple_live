@@ -282,6 +282,13 @@ class LiveRoomPage extends GetView<LiveRoomController> {
             ),
           ),
         ),
+        // 投屏界面
+        Obx(
+          () => Visibility(
+            visible: controller.showChromecastState.value,
+            child: buildChromecastOverlay(),
+          ),
+        ),
       ],
     );
   }
@@ -886,6 +893,15 @@ class LiveRoomPage extends GetView<LiveRoomController> {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.cast),
+              title: const Text("投屏到设备"),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Get.back();
+                controller.showChromecast();
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.info_outline_rounded),
               title: const Text("播放信息"),
               trailing: const Icon(Icons.chevron_right),
@@ -912,5 +928,182 @@ class LiveRoomPage extends GetView<LiveRoomController> {
       return "${m.toString().padLeft(2, '0')}分钟${s.toString().padLeft(2, '0')}秒";
     }
     return "${s.toString().padLeft(2, '0')}秒";
+  }
+
+  /// 构建投屏界面
+  Widget buildChromecastOverlay() {
+    return Container(
+      color: Colors.black54,
+      child: Center(
+        child: Container(
+          width: 400,
+          height: 500,
+          decoration: BoxDecoration(
+            color: Theme.of(Get.context!).cardColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              // 标题栏
+              Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Colors.grey.withAlpha(50),
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: controller.hideChromecast,
+                      icon: const Icon(Icons.arrow_back),
+                    ),
+                    const Expanded(
+                      child: Center(
+                        child: Text(
+                          "投屏设备",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        controller.chromecastService.startDiscovery();
+                      },
+                      icon: const Icon(Icons.refresh),
+                    ),
+                  ],
+                ),
+              ),
+              // 设备列表
+              Expanded(
+                child: Obx(
+                  () {
+                    if (controller.chromecastService.devices.isEmpty) {
+                      return const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.cast,
+                              size: 48,
+                              color: Colors.grey,
+                            ),
+                            SizedBox(height: 16),
+                            Text("未发现投屏设备"),
+                            SizedBox(height: 8),
+                            Text(
+                              "请确保设备在同一网络中",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(12),
+                      itemCount: controller.chromecastService.devices.length,
+                      itemBuilder: (context, index) {
+                        final device = controller.chromecastService.devices[index];
+                        final isConnected =
+                            controller.chromecastService.currentDevice?.address ==
+                                    device.address &&
+                                controller.chromecastService.currentDevice?.port ==
+                                    device.port;
+
+                        return Card(
+                          child: ListTile(
+                            title: Text(device.friendlyName ?? device.name),
+                            subtitle: Text("${device.address}:${device.port}"),
+                            trailing: isConnected
+                                ? const Icon(
+                                    Icons.check_circle,
+                                    color: Colors.green,
+                                  )
+                                : null,
+                            onTap: () {
+                              if (isConnected) {
+                                // 如果已连接，则断开连接
+                                controller.disconnectChromecast();
+                              } else {
+                                // 连接到设备
+                                controller.connectToChromecast(device);
+                              }
+                            },
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+              // 底部控制按钮
+              Container(
+                height: 60,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: Colors.grey.withAlpha(50),
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Obx(
+                      () => Expanded(
+                        child: ElevatedButton(
+                          onPressed: controller.chromecastService.devices.isEmpty
+                              ? null
+                              : () {
+                                  if (controller.chromecastService
+                                      .isConnected.value) {
+                                    // 如果已连接，则投屏当前直播
+                                    controller.castCurrentLive(
+                                      title:
+                                          controller.detail.value?.title ?? "直播",
+                                      imageUrl:
+                                          controller.detail.value?.userAvatar ?? "",
+                                    );
+                                  } else {
+                                    SmartDialog.showToast("请先连接到设备");
+                                  }
+                                },
+                          child: Text(
+                            controller.chromecastService.isConnected.value
+                                ? "开始投屏"
+                                : "请选择设备",
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Obx(
+                      () => Visibility(
+                        visible: controller.chromecastService.isConnected.value,
+                        child: IconButton(
+                          onPressed: controller.stopCast,
+                          icon: const Icon(Icons.stop),
+                          tooltip: "停止投屏",
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

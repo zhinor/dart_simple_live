@@ -201,6 +201,16 @@ Widget buildFullControls(
                   ),
                   IconButton(
                     onPressed: () {
+                      controller.showChromecast();
+                    },
+                    icon: const Icon(
+                      Icons.cast,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
                       showPlayerSettings(controller);
                     },
                     icon: const Icon(
@@ -607,6 +617,16 @@ Widget buildControls(
                       color: Colors.white,
                       size: 24,
                     ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    controller.showChromecast();
+                  },
+                  icon: const Icon(
+                    Icons.cast,
+                    color: Colors.white,
+                    size: 24,
                   ),
                 ),
                 IconButton(

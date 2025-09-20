@@ -72,6 +72,9 @@ dependencies:
   media_kit_video: 1.2.5
   media_kit_libs_video: 1.0.5
 
+  # 投屏功能
+  dart_chromecast: ^0.3.3
+
   flutter:
     sdk: flutter
   flutter_localizations:

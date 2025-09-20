@@ -21,6 +21,7 @@ import 'package:simple_live_app/app/log.dart';
 import 'package:simple_live_app/app/utils.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:simple_live_app/services/chromecast_service.dart';
 
 mixin PlayerMixin {
   GlobalKey<VideoState> globalPlayerKey = GlobalKey<VideoState>();
@@ -114,6 +115,9 @@ mixin PlayerStateMixin on PlayerMixin {
 
   /// 是否为竖屏直播间
   var isVertical = false.obs;
+
+  /// 是否显示投屏界面
+  RxBool showChromecastState = false.obs;
 
   Widget? danmakuView;
 
@@ -651,12 +655,17 @@ class PlayerController extends BaseController
         PlayerDanmakuMixin,
         PlayerSystemMixin,
         PlayerGestureControlMixin {
+  // 投屏服务
+  late final ChromecastService chromecastService;
+
   @override
   void onInit() {
     initSystem();
     initStream();
     //设置音量
     player.setVolume(AppSettingsController.instance.playerVolume.value);
+    // 初始化投屏服务
+    chromecastService = ChromecastService.instance;
     super.onInit();
   }
 
@@ -836,5 +845,105 @@ class PlayerController extends BaseController
     await resetSystem();
     await player.dispose();
     super.onClose();
+  }
+
+  /// 显示投屏界面
+  void showChromecast() {
+    showChromecastState.value = true;
+    // 开始发现设备
+    chromecastService.startDiscovery();
+  }
+
+  /// 隐藏投屏界面
+  void hideChromecast() {
+    showChromecastState.value = false;
+    // 停止发现设备
+    chromecastService.stopDiscovery();
+  }
+
+  /// 连接到投屏设备
+  Future<void> connectToChromecast(ChromecastDevice device) async {
+    final connected = await chromecastService.connectToDevice(device);
+    if (connected) {
+      SmartDialog.showToast("已连接到 ${device.friendlyName ?? device.name}");
+    } else {
+      SmartDialog.showToast("连接失败");
+    }
+  }
+
+  /// 断开投屏连接
+  Future<void> disconnectChromecast() async {
+    await chromecastService.disconnect();
+    SmartDialog.showToast("已断开连接");
+  }
+
+  /// 投屏当前播放的直播
+  Future<void> castCurrentLive({
+    required String title,
+    required String imageUrl,
+  }) async {
+    if (!chromecastService.isConnected.value) {
+      SmartDialog.showToast("请先连接到投屏设备");
+      return;
+    }
+
+    // 获取当前播放的URL
+    final currentMedia = player.state.playlist?.medias.first;
+    if (currentMedia == null) {
+      SmartDialog.showToast("当前没有播放的媒体");
+      return;
+    }
+
+    final url = currentMedia.uri;
+    final success = await chromecastService.playMedia(
+      url: url,
+      title: title,
+      imageUrl: imageUrl,
+      contentType: "video/mp4", // 根据实际情况可能需要调整
+    );
+
+    if (success) {
+      SmartDialog.showToast("开始投屏: $title");
+    } else {
+      SmartDialog.showToast("投屏失败");
+    }
+  }
+
+  /// 暂停投屏
+  Future<void> pauseCast() async {
+    final success = await chromecastService.pause();
+    if (success) {
+      SmartDialog.showToast("投屏已暂停");
+    } else {
+      SmartDialog.showToast("暂停投屏失败");
+    }
+  }
+
+  /// 恢复投屏
+  Future<void> playCast() async {
+    final success = await chromecastService.play();
+    if (success) {
+      SmartDialog.showToast("投屏已恢复");
+    } else {
+      SmartDialog.showToast("恢复投屏失败");
+    }
+  }
+
+  /// 停止投屏
+  Future<void> stopCast() async {
+    final success = await chromecastService.stop();
+    if (success) {
+      SmartDialog.showToast("投屏已停止");
+    } else {
+      SmartDialog.showToast("停止投屏失败");
+    }
+  }
+
+  /// 设置投屏音量
+  Future<void> setCastVolume(double volume) async {
+    final success = await chromecastService.setVolume(volume);
+    if (!success) {
+      SmartDialog.showToast("设置音量失败");
+    }
   }
 }
