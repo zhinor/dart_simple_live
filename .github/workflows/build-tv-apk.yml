@@ -34,25 +34,17 @@ jobs:
           flutter-version: '3.22.x'
           cache: true
 
-      # Create dummy key.properties file to avoid build errors
-      - name: Create dummy key.properties
-        run: |
-          echo "storePassword=dummy" > simple_live_tv_app/android/key.properties
-          echo "keyPassword=dummy" >> simple_live_tv_app/android/key.properties
-          echo "keyAlias=dummy" >> simple_live_tv_app/android/key.properties
-          echo "storeFile=/dev/null" >> simple_live_tv_app/android/key.properties
-
       # Restore Flutter packages for TV app
       - name: Restore TV app packages
         run: |
           cd simple_live_tv_app
           flutter pub get
 
-      # Build TV APK
+      # Build TV APK without signing for development
       - name: Build TV APK
         run: |
           cd simple_live_tv_app
-          flutter build apk --release
+          flutter build apk --release --no-shrink
 
       # Upload TV APK artifacts
       - name: Upload TV APK artifacts
