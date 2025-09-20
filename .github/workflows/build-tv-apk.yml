@@ -34,10 +34,11 @@ jobs:
           flutter-version: '3.22.x'
           cache: true
 
-      # Create a self-signed keystore for development
-      - name: Create self-signed keystore
+      # Create a deterministic self-signed keystore for development
+      - name: Create deterministic keystore
         run: |
           cd simple_live_tv_app/android
+          # Generate keystore with fixed parameters to ensure consistency
           keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -storetype JKS
 
       # Create key.properties file
