@@ -51,6 +51,9 @@ jobs:
       - name: Restore packages
         run: |
           cd simple_live_app
+          pwd
+          ls -la ..
+          ls -la ../dart_chromecast
           flutter pub get
 
       # Verify dependencies
